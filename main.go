@@ -15,7 +15,7 @@ import (
 
 const configDir  = "MSAS"
 const configFile = "MSAS/config.json"
-const logFile    = "MSAS/launcher.log"
+const logFile    = "MSAS/System.log"
 
 type Config struct {
 	ServerFolder     string `json:"server_folder"`
