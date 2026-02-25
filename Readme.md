@@ -25,7 +25,7 @@ stopコマンドの権限譲渡、もしくはサーバーの停止を自動化�
 　├── MSAS-vx.x.x.exe（本プログラム）
 　├── 📁 MSAS/（初回起動時自動生成）
 　│　　├── config.json
-　│　　└── launcher.log
+　│　　└── System.log
 　└── 📁 server/（サーバーフォルダ）
 　　　　└── forge-server.jar（サーバーファイル）
 </pre>
