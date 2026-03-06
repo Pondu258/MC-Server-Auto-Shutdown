@@ -20,6 +20,8 @@ const logFile    = "MSAS/System.log"
 type Config struct {
 	ServerFolder     string `json:"server_folder"`
 	ServerJar        string `json:"server_jar"`
+	StartType         string `json:"start_type"`          // "jar" or "bat"
+	BatFile           string `json:"bat_file"`
 	CountdownSeconds int    `json:"countdown_seconds"`
 	ShutdownTimeStart string `json:"shutdown_time_start"` // "HH:MM"
 	ShutdownTimeEnd   string `json:"shutdown_time_end"`   // "HH:MM"
@@ -33,6 +35,8 @@ func loadConfig() {
 	config = Config{
 		ServerFolder:      "server",
 		ServerJar:         "forge-server.jar",
+		StartType:         "jar",
+	    BatFile:           "run.bat",
 		CountdownSeconds:  60,
 		ShutdownTimeStart: "02:00",
 		ShutdownTimeEnd:   "08:00",
@@ -118,8 +122,22 @@ func setup() {
 	// サーバーフォルダ
 	config.ServerFolder = readLine(reader, "サーバーフォルダ名", config.ServerFolder)
 
-	// JARファイル名
-	config.ServerJar = readLine(reader, "サーバーのJARファイル名", config.ServerJar)
+	// 起動タイプ選択
+    for {
+	    t := readLine(reader, "起動方式 (jar/bat)", config.StartType)
+	    if t == "jar" || t == "bat" {
+		    config.StartType = t
+		    break
+	    }
+	    fmt.Println("  ※ jar または bat を入力してください")
+    }
+
+    // jarの場合のみJAR名を聞く
+    if config.StartType == "jar" {
+	    config.ServerJar = readLine(reader, "サーバーのJARファイル名", config.ServerJar)
+    } else {
+	    config.BatFile = readLine(reader, "batファイル名", config.BatFile)
+    }   
 
 	// 待機時間
 	for {
@@ -165,10 +183,25 @@ func setup() {
 // ── サーバー起動 ─────────────────────────────────────
 
 func startServer() (normalExit bool) {
-	jarPath := filepath.Join(config.ServerFolder, config.ServerJar)
-	fmt.Printf("\nサーバーを起動します... (%s)\n\n", jarPath)
+	var cmd *exec.Cmd
 
-	cmd := exec.Command("java", "-Xmx4G", "-jar", jarPath, "nogui")
+	if config.StartType == "bat" {
+	    // 絶対パスに変換
+	    absDir, err := filepath.Abs(config.ServerFolder)
+	    if err != nil {
+		    fmt.Println("フォルダのパス解決に失敗しました:", err)
+		    return false
+	    }
+	    batPath := filepath.Join(absDir, config.BatFile)
+	    fmt.Printf("\nサーバーを起動します... (%s)\n\n", batPath)
+	    cmd = exec.Command("cmd", "/c", batPath)
+	    cmd.Dir = absDir
+	} else {
+		jarPath := filepath.Join(config.ServerFolder, config.ServerJar)
+		fmt.Printf("\nサーバーを起動します... (%s)\n\n", jarPath)
+		cmd = exec.Command("java", "-Xmx4G", "-jar", jarPath, "nogui")
+	}
+
 	cmd.Dir = config.ServerFolder
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
